@@ -21,3 +21,11 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+.project
+.classpath
+bin/
+.settings/
+model/1.xlsx
+model/model.60000.93
+model/model.60000.9332
