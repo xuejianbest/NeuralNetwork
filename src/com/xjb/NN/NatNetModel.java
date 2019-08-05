@@ -1,17 +1,22 @@
 package com.xjb.NN;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import com.xjb.util.DataUtil;
+
 public class NatNetModel {
   private ArrayList<Perceptron[]> net = new ArrayList<>();
 
   private double stepSize = 0.5; // 训练速度
   private int maxIter = 100; // 迭代次数
+
+  private int inputSize; // 输入层神经元数量
 
   public NatNetModel setStepSize(double stepSize) {
     this.stepSize = stepSize;
@@ -21,6 +26,10 @@ public class NatNetModel {
   public NatNetModel setMaxIter(int maxIter) {
     this.maxIter = maxIter;
     return this;
+  }
+
+  public int getInputSize() {
+    return inputSize;
   }
 
   /**
@@ -46,6 +55,7 @@ public class NatNetModel {
       }
     }
 
+    this.inputSize = layers[0];
     return this;
   }
 
@@ -143,7 +153,7 @@ public class NatNetModel {
     Perceptron[] layer_in = net.get(0);
     int input_c = layer_in[0].args_c();
     if (input.length > input_c) {
-      throw new RuntimeException("输入过多，最多接收输入数量: " + input_c);
+      throw new RuntimeException("输入过多，最多接收输入数量: " + input_c + "，实际参数数量：" + input.length);
     } else if (input.length < input_c) {
       double[] input_ = new double[input_c];
       for (int i = 0; i < input.length; i++) {
@@ -199,7 +209,8 @@ public class NatNetModel {
   public void fit(double[][] input, double[][] y) {
     int n = 0;
     while (n < maxIter) {
-      for (int i = 0; i < input.length; i++) {
+      int[] rankIndex = DataUtil.randomRank(input.length);
+      for (int i : rankIndex) {
         FP(input[i]);
         BP(y[i], stepSize);
       }
@@ -262,7 +273,7 @@ public class NatNetModel {
    * @return
    * @throws IOException
    */
-  public static NatNetModel loadTxt(String model_path) throws IOException {
+  public static NatNetModel loadTxt(File model_path) throws IOException {
     NatNetModel model;
     BufferedReader in = new BufferedReader(new FileReader(model_path));
     String contype = in.readLine();
@@ -298,5 +309,17 @@ public class NatNetModel {
     System.out.println("model loaded.");
     in.close();
     return model;
+  }
+
+  /**
+   * 从可读的文本文件加载模型
+   * 
+   * @param model_path
+   *          保存路径
+   * @return
+   * @throws IOException
+   */
+  public static NatNetModel loadTxt(String model_path) throws IOException {
+    return loadTxt(new File(model_path));
   }
 }

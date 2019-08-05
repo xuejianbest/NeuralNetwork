@@ -1,5 +1,7 @@
 package com.xjb.NN;
 
+import com.xjb.util.DataUtil;
+
 public abstract class Perceptron {
   private double[] w_arr; // 此神经元的参数
   private double[] i_arr; // 此神经元的输入值
@@ -23,11 +25,7 @@ public abstract class Perceptron {
     w_arr = new double[input_c];
     i_arr = new double[input_c];
     for (int i = 0; i < input_c; i++) {
-      double w = Math.random() - 0.5;
-      while (w < 0.2 && w > -0.2) {
-        w = Math.random() - 0.5;
-      }
-      w_arr[i] = w;
+      w_arr[i] = DataUtil.randomNum(-0.05, 0.05);
     }
   }
 

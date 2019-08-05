@@ -12,10 +12,10 @@ import com.xjb.util.Debug;
 public class ImgReader implements Serializable {
   private static final long serialVersionUID = -7102147891221634845L;
 
-  String train_imgs = "d:/imgT/train-images.idx3-ubyte";
-  String train_labels = "d:/imgT/train-labels.idx1-ubyte";
-  String test_imgs = "d:/imgT/t10k-images.idx3-ubyte";
-  String test_labels = "d:/imgT/t10k-labels.idx1-ubyte";
+  String train_imgs = "./data/train-images.idx3-ubyte";
+  String train_labels = "./data/train-labels.idx1-ubyte";
+  String test_imgs = "./data/t10k-images.idx3-ubyte";
+  String test_labels = "./data/t10k-labels.idx1-ubyte";
 
   public static void main(String[] args) throws Exception {
     ImgReader ir = new ImgReader();

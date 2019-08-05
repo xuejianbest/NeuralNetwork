@@ -9,31 +9,61 @@ import com.xjb.data.ImgReader;
 import com.xjb.util.Debug;
 
 public class TestImg {
-  private final String modelPath = "./model/model.txt";
-  private ImgReader ir = new ImgReader();
-  NatNetModel model;
+  private final ImgReader ir = new ImgReader();
+  private String modelPath;
+  private NatNetModel model;
+  private int zoom;
 
   public static void main(String[] args) throws Exception {
     long t1 = System.currentTimeMillis();
-    TestImg ti = new TestImg();
 
-    if (!new File(ti.modelPath).exists()) {
-      ti.learn();
+    if (args.length < 3) {
+      throw new RuntimeException("command model_file iter_num step_size [hidden_size zoom]");
     }
-    long t2 = Debug.printTime(t1, "fited");
 
-    ti.model = NatNetModel.loadTxt(ti.modelPath);
-    ti.evaluation(0, 5000);
-    ti.evaluation(5000, 5000);
-    ti.evaluation(0, 10000);
-    Debug.printTime(t2, "evaluation");
+    TestImg ti = new TestImg();
+    ti.modelPath = args[0];
+    File modelFile = new File(ti.modelPath);
+
+    if (!modelFile.exists() && args.length < 5) {
+      throw new RuntimeException("model_file not exists, [hidden_size zoom] must be specified.");
+
+    } else if (!modelFile.exists()) {
+      int hidenSize = Integer.parseInt(args[3]);
+      ti.zoom = Integer.parseInt(args[4]);
+      int inputSize = (28 / ti.zoom) + (28 % ti.zoom > 0 ? 1 : 0);
+      int[] layers = new int[] { inputSize * inputSize, hidenSize, 10 };
+      ti.model = new NatNetModel(layers);
+
+    } else {
+      ti.model = NatNetModel.loadTxt(modelFile);
+      ti.zoom = (int) Math.round(Math.sqrt(28.0 * 28 / ti.model.getInputSize()));
+    }
+
+    int iterNum = Integer.parseInt(args[1]);
+    double stepSize = new Double(args[2]);
+    ti.model.setMaxIter(iterNum).setStepSize(stepSize);
+
+    long t2 = Debug.printTime(t1, "Set model done.");
+
+    // 开始训练
+    System.out.println("learning...");
+    ti.learn();
+    long t3 = Debug.printTime(t2, "learn finished.");
+
+    // 评估模型
+    ti.evaluate(0, 5000);
+    ti.evaluate(5000, 5000);
+    double right = ti.evaluate(0, 10000);
+    long t4 = Debug.printTime(t3, "evaluate finished");
+
+    // 保存模型
+    String newSavePath = String.format("%s%%%.4f", ti.modelPath.split("%")[0], right).replace("%0.", "%");
+    ti.model.saveTxt(newSavePath);
+    Debug.printTime(t4, "model saved.");
   }
 
   private void learn() throws IOException {
-    int zoom = 2;
-    int[] layers = new int[] { 28 * 28 / zoom / zoom, 30, 10};
-    NatNetModel model = new NatNetModel(layers).setMaxIter(1).setStepSize(1);
-
     int offset = 0;
     int num = 60000;
     Map<String, Object> data = ir.getData(num, offset, zoom, "train");
@@ -41,11 +71,10 @@ public class TestImg {
     double[][] ys = (double[][]) data.get("ys");
 
     model.fit(inputs, ys);
-    model.saveTxt(modelPath);
   }
 
-  private void evaluation(int offset, int num) throws IOException {
-    Map<String, Object> map = ir.getData(num, offset, 2, "test");
+  private double evaluate(int offset, int num) throws IOException {
+    Map<String, Object> map = ir.getData(num, offset, zoom, "test");
     double[][] inputs = (double[][]) map.get("inputs");
     int[] labels = (int[]) map.get("labels");
 
@@ -61,7 +90,8 @@ public class TestImg {
         right++;
       }
     }
-    System.out.println(String.format("%d, %d, %f", right, num, right * 1.0 / num));
+    System.out.println(String.format("%d, %d, %.4f", right, num, right * 1.0 / num));
+    return right * 1.0 / num;
   }
 
   private int getPredict(double[] out) {
