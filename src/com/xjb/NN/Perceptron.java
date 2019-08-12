@@ -4,16 +4,16 @@ import com.xjb.util.DataUtil;
 
 public abstract class Perceptron {
   private double[] w_arr; // 此神经元的参数
-  private double[] i_arr; // 此神经元的输入值
+  protected double[] i_arr; // 此神经元的输入值
 
   private double[] dw_arr; // 此神经元的参数的偏导
-  private double[] di_arr; // 此神经元的输入的偏导
+  protected double[] di_arr; // 此神经元的输入的偏导
 
   private double x; // 此神经元的输入和参数乘积的和
-  private double out; // 此神经元的输出，即：activation(x)
+  protected double out; // 此神经元的输出，即：activation(x)
 
   private Perceptron[] nexts = null; // 此神经元连接的下一层神经元
-  private int index = 0; // 此神经元在本层的编号
+  protected int index = 0; // 此神经元在本层的编号
 
   /**
    * 构造函数，主要是随机生成指定数量的本神经元的参数
@@ -27,6 +27,9 @@ public abstract class Perceptron {
     for (int i = 0; i < input_c; i++) {
       w_arr[i] = DataUtil.randomNum(-0.05, 0.05);
     }
+  }
+
+  protected Perceptron() {
   }
 
   public Perceptron[] getNext() {
@@ -143,10 +146,6 @@ public abstract class Perceptron {
    * 激活神经元，往前传递信息
    */
   public void work() {
-    if (i_arr.length != w_arr.length) {
-      throw new RuntimeException("输入数量和参数数量不一样多，输入数量： " + i_arr.length + "， 参数数量： " + w_arr.length);
-    }
-
     this.x = 0.0;
     for (int i = 0; i < w_arr.length; i++) {
       this.x += this.w_arr[i] * this.i_arr[i];

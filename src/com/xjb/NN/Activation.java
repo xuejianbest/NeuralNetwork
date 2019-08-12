@@ -1,6 +1,5 @@
 package com.xjb.NN;
 
-@SuppressWarnings("unused")
 public class Activation {
   private double sigmoid(double x) {
     return 1.0 / (1.0 + Math.exp(-x));
@@ -23,7 +22,7 @@ public class Activation {
   }
 
   private double dTanh(double x) {
-    double t = tanh(B * x);
+    double t = Math.tanh(B * x);
     double dt = 1 - t * t;
     return A * B * dt;
   }
@@ -42,8 +41,8 @@ public class Activation {
     return res;
   }
   
-  public class MyPerceptron extends Perceptron {
-    public MyPerceptron(int input_c) {
+  public class SigPerceptron extends Perceptron {
+    public SigPerceptron(int input_c) {
       super(input_c);
     }
 
@@ -55,6 +54,40 @@ public class Activation {
     @Override
     protected double dout_x(double x) {
       return dSigmoid(x);
+    }
+
+  }
+  
+  public class ReLuPerceptron extends Perceptron {
+    public ReLuPerceptron(int input_c) {
+      super(input_c);
+    }
+
+    @Override
+    protected double activation(double x) {
+      return reLu(x);
+    }
+
+    @Override
+    protected double dout_x(double x) {
+      return dReLu(x);
+    }
+
+  }
+  
+  public class TanhPerceptron extends Perceptron {
+    public TanhPerceptron(int input_c) {
+      super(input_c);
+    }
+
+    @Override
+    protected double activation(double x) {
+      return tanh(x);
+    }
+
+    @Override
+    protected double dout_x(double x) {
+      return dTanh(x);
     }
 
   }

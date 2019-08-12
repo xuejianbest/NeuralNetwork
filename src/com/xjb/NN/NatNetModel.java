@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import com.xjb.Test.TestImgR;
 import com.xjb.util.DataUtil;
+import com.xjb.util.Debug;
 
 public class NatNetModel {
   private ArrayList<Perceptron[]> net = new ArrayList<>();
@@ -42,9 +44,18 @@ public class NatNetModel {
     for (int i = 1; i < layers.length; i++) {
       Perceptron[] layerP = new Perceptron[layers[i]];
       for (int index = 0; index < layers[i]; index++) {
-        layerP[index] = new Activation().new MyPerceptron(layers[i - 1]);
+        layerP[index] = new Activation().new ReLuPerceptron(layers[i - 1]);
       }
       net.add(layerP);
+
+      if (i == layers.length - 1) {
+        Perceptron[] outputP = new OutputPerceptron[layers[i]];
+        int outputPIndex = 0;
+        for (int index = 0; index < layers[i]; index++) {
+          outputP[index] = new OutputPerceptron(layers[i], outputPIndex++);
+        }
+        net.add(outputP);
+      }
     }
 
     for (int i = 0; i < net.size() - 1; i++) {
@@ -153,13 +164,14 @@ public class NatNetModel {
     Perceptron[] layer_in = net.get(0);
     int input_c = layer_in[0].args_c();
     if (input.length > input_c) {
-      throw new RuntimeException("输入过多，最多接收输入数量: " + input_c + "，实际参数数量：" + input.length);
+      throw new RuntimeException("输入过多，接收输入数量: " + input_c + "，实际数量：" + input.length);
     } else if (input.length < input_c) {
       double[] input_ = new double[input_c];
       for (int i = 0; i < input.length; i++) {
         input_[i] = input[i];
       }
       input = input_;
+      throw new RuntimeException("输入过少，接收输入数量: " + input_c + "，实际数量：" + input.length);
     }
 
     for (Perceptron in_perceptron : layer_in) {
@@ -190,7 +202,7 @@ public class NatNetModel {
         Perceptron p = layer[index];
         if (layer_c == net.size() - 1) {
           double dc = dcost_out(y[index], p.getOut());
-          p.dwork(dc, stepSize);
+          p.dwork(dc);
         } else {
           p.dwork(stepSize);
         }
@@ -212,9 +224,27 @@ public class NatNetModel {
       int[] rankIndex = DataUtil.randomRank(input.length);
       for (int i : rankIndex) {
         FP(input[i]);
+        // System.out.println("FP..." + toString());
         BP(y[i], stepSize);
+        // System.out.println("BP..." + toString());
       }
       n++;
+
+      TestImgR ti = new TestImgR();
+      try {
+        System.out.println(n + "轮： ");
+        ti.evaluate(0, 5000);
+        ti.evaluate(5000, 5000);
+        ti.evaluate(0, 10000);
+        System.out.println("train:");
+        ti.fitted(0, 30000);
+        ti.fitted(30000, 30000);
+        ti.fitted(0, 60000);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
+      Debug.printTime(n + "轮 end");
     }
   }
 
@@ -251,6 +281,10 @@ public class NatNetModel {
     for (Perceptron[] layer : net) {
       sb.append(String.format("layer %d begin\n", i));
       for (Perceptron p : layer) {
+        if(p.getW_arr() == null) {
+          break;
+        }
+          
         for (double w : p.getW_arr()) {
           sb.append(w + ",");
         }

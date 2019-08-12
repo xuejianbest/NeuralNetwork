@@ -3,28 +3,40 @@ package com.xjb.data;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.xjb.util.Debug;
+public class ImgReader {
+  private static final String train_imgs = "./data/train-images.idx3-ubyte";
+  private static final String train_labels = "./data/train-labels.idx1-ubyte";
+  private static final String test_imgs = "./data/t10k-images.idx3-ubyte";
+  private static final String test_labels = "./data/t10k-labels.idx1-ubyte";
+  private static Map<String, Object> testData;
+  private static Map<String, Object> trainData;
 
-public class ImgReader implements Serializable {
-  private static final long serialVersionUID = -7102147891221634845L;
-
-  String train_imgs = "./data/train-images.idx3-ubyte";
-  String train_labels = "./data/train-labels.idx1-ubyte";
-  String test_imgs = "./data/t10k-images.idx3-ubyte";
-  String test_labels = "./data/t10k-labels.idx1-ubyte";
-
-  public static void main(String[] args) throws Exception {
-    ImgReader ir = new ImgReader();
-    double[][] img = new double[][] { { 0, 127, 255 }, { 0, 128, 0 }, { 255, 255, 0 } };
-    System.out.println(ir);
-    Debug.printarr(img);
+  public static Map<String, Object> loadTestData(int zoom) {
+    try {
+      if (testData == null) {
+        testData = getData(0, 10000, zoom, "test");
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return testData;
   }
 
-  public Map<String, Object> getData(int num, int offset, int zoom, String type) throws IOException {
+  public static Map<String, Object> loadTrainData(int zoom) {
+    try {
+      if (trainData == null) {
+        trainData = getData(0, 60000, zoom, "train");
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return trainData;
+  }
+
+  public static Map<String, Object> getData(int offset, int num, int zoom, String type) throws IOException {
     double[][] inputs = new double[num][];
     double[][] ys = new double[num][];
     int i = 0;
@@ -32,13 +44,13 @@ public class ImgReader implements Serializable {
     int[][][] imgs;
     int[] labels;
     if (type.equals("train")) {
-      imgs = train_imgs(num, offset);
-      labels = train_labels(num, offset);
-      
+      imgs = train_imgs(offset, num);
+      labels = train_labels(offset, num);
+
     } else if (type.equals("test")) {
-      imgs = test_imgs(num, offset);
-      labels = test_labels(num, offset);
-      
+      imgs = test_imgs(offset, num);
+      labels = test_labels(offset, num);
+
     } else {
       throw new RuntimeException("type must be 'train' or 'test': " + type);
     }
@@ -60,14 +72,14 @@ public class ImgReader implements Serializable {
     return res;
   }
 
-  private double[] addReduction(int y) {
+  private static double[] addReduction(int y) {
     int dim = 10;
     double[] res = new double[dim];
     res[y] = 1;
     return res;
   }
 
-  private int[] dimReduction(int[][] img) {
+  private static int[] dimReduction(int[][] img) {
     int[] res = new int[img.length * img[0].length];
     for (int r = 0; r < img.length; r++) {
       for (int c = 0; c < img[0].length; c++) {
@@ -77,7 +89,7 @@ public class ImgReader implements Serializable {
     return res;
   }
 
-  private int[][] zoomOut(int[][] img, int zoom) {
+  private static int[][] zoomOut(int[][] img, int zoom) {
     int res_r = img.length % zoom > 0 ? img.length / zoom + 1 : img.length / zoom;
     int res_c = img[0].length % zoom > 0 ? img[0].length / zoom + 1 : img[0].length / zoom;
     int[][] res = new int[res_r][res_c];
@@ -92,7 +104,7 @@ public class ImgReader implements Serializable {
     return res;
   }
 
-  private double[] stardand(int[] input) {
+  private static double[] stardand(int[] input) {
     double[] res = new double[input.length];
     for (int i = 0; i < input.length; i++) {
       res[i] = input[i] / 127.5 - 1.0;
@@ -100,23 +112,23 @@ public class ImgReader implements Serializable {
     return res;
   }
 
-  private int[][][] train_imgs(int num, int offset) throws IOException {
-    return imgReader(train_imgs, num, offset);
+  private static int[][][] train_imgs(int offset, int num) throws IOException {
+    return imgReader(train_imgs, offset, num);
   }
 
-  private int[][][] test_imgs(int num, int offset) throws IOException {
-    return imgReader(test_imgs, num, offset);
+  private static int[][][] test_imgs(int offset, int num) throws IOException {
+    return imgReader(test_imgs, offset, num);
   }
 
-  private int[] train_labels(int num, int offset) throws IOException {
-    return labelReader(train_labels, num, offset);
+  private static int[] train_labels(int offset, int num) throws IOException {
+    return labelReader(train_labels, offset, num);
   }
 
-  private int[] test_labels(int num, int offset) throws IOException {
-    return labelReader(test_labels, num, offset);
+  private static int[] test_labels(int offset, int num) throws IOException {
+    return labelReader(test_labels, offset, num);
   }
 
-  private int[][][] imgReader(String file, int num, int offset) throws IOException {
+  private static int[][][] imgReader(String file, int offset, int num) throws IOException {
     DataInputStream in = new DataInputStream(new FileInputStream(file));
 
     int magic_number = in.readInt();
@@ -149,7 +161,7 @@ public class ImgReader implements Serializable {
     return imgs;
   }
 
-  private int[] labelReader(String file, int num, int offset) throws IOException {
+  private static int[] labelReader(String file, int offset, int num) throws IOException {
     DataInputStream in = new DataInputStream(new FileInputStream(file));
 
     int magic_number = in.readInt();
